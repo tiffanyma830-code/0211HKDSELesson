@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSE 經濟學探究教室：需求與供應動態模擬器</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        input[type=range] {
+            accent-color: #2563eb;
+        }
+        canvas {
+            touch-action: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+  <!--頂部導覽列-->
+  <header class="bg-indigo-700 text-white shadow-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
+      <div class="flex items-center space-x-3">
+        <span class="bg-indigo-600 p-2 rounded-lg text-xl"><i class="fa-solid fa-chart-line"></i></span>
+        <div>
+          <h1 class="text-lg font-bold tracking-wide">DSE 經濟學探究教室</h1>
+          <p class="text-xs text-indigo-200">市場均衡、曲線平移與總收益 (TR) 分析</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-3 bg-indigo-800/60 px-3 py-1.5 rounded-lg border border-indigo-500/30">
+        <label for="groupSelect" class="text-xs font-medium text-indigo-200"><i class="fa-solid fa-users mr-1"></i>當前組別：</label>
+        <select id="groupSelect" class="bg-indigo-900 text-white text-sm font-semibold rounded px-2 py-1 border border-indigo-400 focus:outline-none focus:ring-2 focus:ring-white">
+          <option value="1">第 1 組</option>
+          <option value="2">第 2 組</option>
+          <option value="3">第 3 組</option>
+          <option value="4">第 4 組</option>
+          <option value="5">第 5 組</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <!--主要內容區-->
+  <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full space-y-6">
+
+    <!-- 本機儲存提示 -->
+    <div id="syncStatus" class="bg-amber-50 border-l-4 border-amber-400 p-3 rounded-r-lg text-xs text-amber-800 flex items-center justify-between shadow-sm">
+      <span><i class="fa-solid fa-triangle-exclamation mr-1.5 text-amber-500"></i>提示：學生的預測與數據會自動保存在這部裝置的瀏覽器中。</span>
+      <span id="savedTime" class="font-medium text-amber-900"></span>
+    </div>
+
+    <!-- 情境導覽列 -->
+    <section class="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
+      <h2 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3"><i class="fa-solid fa-newspaper mr-1.5 text-indigo-600"></i>請選擇探究情境：</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3" id="scenarioCards">
+        <!-- JS 動態渲染情境按鈕 -->
+      </div>
+      <div id="scenarioDescription" class="mt-4 p-4 bg-indigo-50 rounded-lg text-sm text-indigo-900 border border-indigo-100 leading-relaxed">
+        <!-- 動態情境說明 -->
+      </div>
+    </section>
+
+    <!-- 階段一：組內預測 -->
+    <section class="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
+      <div class="flex items-center space-x-2 mb-3">
+        <span class="bg-indigo-100 text-indigo-700 w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm">1</span>
+        <h2 class="text-base font-bold text-slate-800">階段一：組內討論與預測（曲線平移方向）</h2>
+      </div>
+      <p class="text-sm text-slate-600 mb-4">根據剛才選擇的經濟學情境，你們小組認為市場的需求曲線 ($D$) 與供應曲線 ($S$) 會如何移動？</p>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+          <label class="block text-xs font-bold text-slate-700 mb-1">需求曲線 ($D$) 預測：</label>
+          <select id="predDemand" class="w-full text-sm p-2 rounded border border-slate-300 bg-white">
+            <option value="none">-- 請選擇 --</option>
+            <option value="right">向右平移 (Rightward Shift / 增加)</option>
+            <option value="left">向左平移 (Leftward Shift / 減少)</option>
+            <option value="none-change">保持不變</option>
+          </select>
+        </div>
+        <div class="p-3 bg-slate-50 rounded-lg border border-slate-200">
+          <label class="block text-xs font-bold text-slate-700 mb-1">供應曲線 ($S$) 預測：</label>
+          <select id="predSupply" class="w-full text-sm p-2 rounded border border-slate-300 bg-white">
+            <option value="none">-- 請選擇 --</option>
+            <option value="right">向右平移 (Rightward Shift / 增加)</option>
+            <option value="left">向左平移 (Leftward Shift / 減少)</option>
+            <option value="none-change">保持不變</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1">經濟學理由（應用 DSE 概念，如替代品、聯合需求、生產成本等）：</label>
+        <textarea id="predReason" rows="2" class="w-full text-sm p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="例如：由於該商品與...屬替代品，當其價格上升時，引致消費者轉買此商品..."></textarea>
+      </div>
+    </section>
+
+    <!-- 階段二：模擬器與總收益分析 -->
+    <section class="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
+      <div class="flex items-center space-x-2 mb-3">
+        <span class="bg-indigo-100 text-indigo-700 w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm">2</span>
+        <h2 class="text-base font-bold text-slate-800">階段二：動態模擬（雙曲線平行平移與總收益面積視覺化）</h2>
+      </div>
+      <p class="text-sm text-slate-600 mb-4">
+        <b>操作說明：</b>請透過下方控制桿（範圍 -10 至 +10）自由平移需求曲線 ($D$) 與供應曲線 ($S$)，觀察新舊均衡點 $E_0 \rightarrow E_1$ 的轉變，並透過圖上的色塊面積對比總收益的變化。
+      </p>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <!-- Canvas 圖表區 -->
+        <div class="lg:col-span-7 bg-slate-900 p-4 rounded-xl flex flex-col items-center shadow-inner">
+          <div class="w-full flex justify-between items-center text-xs text-slate-300 mb-2 px-1">
+            <span><i class="fa-solid fa-chart-area mr-1"></i>市場供需與均衡圖 ($P - Q$)</span>
+            <span class="bg-slate-800 px-2 py-0.5 rounded text-indigo-400 font-mono">DSE Econ Model</span>
+          </div>
+          <div class="bg-white rounded-lg p-2 w-full flex justify-center">
+            <canvas id="econCanvas" width="450" height="320" class="max-w-full h-auto"></canvas>
+          </div>
+          <div class="flex flex-wrap gap-3 justify-center text-xs text-slate-300 mt-3">
+            <span class="flex items-center"><span class="w-3 h-0.5 bg-slate-400 border-dashed inline-block mr-1"></span> 原始 $D_0 / S_0$</span>
+            <span class="flex items-center"><span class="w-3 h-1 bg-blue-600 inline-block mr-1"></span> 新 $D_1$</span>
+            <span class="flex items-center"><span class="w-3 h-1 bg-emerald-600 inline-block mr-1"></span> 新 $S_1$</span>
+            <span class="flex items-center text-blue-300"><span class="w-2.5 h-2.5 bg-blue-500/40 inline-block mr-1 rounded-sm"></span> $E_0$ 總收益 ($TR_0$)</span>
+            <span class="flex items-center text-amber-400"><span class="w-2.5 h-2.5 bg-amber-500/40 inline-block mr-1 rounded-sm"></span> $E_1$ 總收益 ($TR_1$)</span>
+          </div>
+        </div>
+
+        <!-- 曲線控制與數據面板 -->
+        <div class="lg:col-span-5 space-y-4">
+          <!-- 平移控制項 -->
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+            <h3 class="text-xs font-bold text-slate-600 uppercase tracking-wider"><i class="fa-solid fa-sliders mr-1 text-indigo-600"></i>曲線平移調節器 (-10 至 +10)</h3>
+            
+            <!-- 需求平移滑桿 -->
+            <div>
+              <div class="flex justify-between text-xs font-medium mb-1">
+                <span class="text-blue-700">需求曲線平移量 ($\Delta D$): <strong id="dShiftVal">0</strong></span>
+                <span class="text-slate-400">(-10: 左移, +10: 右移)</span>
+              </div>
+              <input type="range" id="dShiftRange" min="-10" max="10" step="1" value="0" class="w-full">
+              <div class="flex justify-between text-[10px] text-slate-500 mt-1">
+                <span>← 減少 (左)</span>
+                <button onclick="resetD()" class="text-indigo-600 hover:underline">歸零</button>
+                <span>增加 (右) →</span>
+              </div>
+            </div>
+
+            <!-- 供應平移滑桿 -->
+            <div>
+              <div class="flex justify-between text-xs font-medium mb-1">
+                <span class="text-emerald-700">供應曲線平移量 ($\Delta S$): <strong id="sShiftVal">0</strong></span>
+                <span class="text-slate-400">(-10: 左移, +10: 右移)</span>
+              </div>
+              <input type="range" id="sShiftRange" min="-10" max="10" step="1" value="0" class="w-full">
+              <div class="flex justify-between text-[10px] text-slate-500 mt-1">
+                <span>← 減少/成本升 (左)</span>
+                <button onclick="resetS()" class="text-indigo-600 hover:underline">歸零</button>
+                <span>增加/技術升 (右) →</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 均衡與總收益視覺對比提示卡片 -->
+          <div class="bg-indigo-900 text-white p-4 rounded-xl shadow-sm space-y-3">
+            <h3 class="text-xs font-bold text-indigo-200 uppercase tracking-wider"><i class="fa-solid fa-eye mr-1"></i>總收益面積視覺對比 ($TR = P \times Q$)</h3>
+            <div class="space-y-2 text-xs">
+              <div class="flex items-center space-x-2 bg-indigo-950/60 p-2 rounded border border-indigo-700/50">
+                <span class="w-3 h-3 bg-blue-500 rounded-sm inline-block shrink-0"></span>
+                <span><b>藍色區域</b>：原始均衡點 $E_0$ 的總收益面積。</span>
+              </div>
+              <div class="flex items-center space-x-2 bg-indigo-950/60 p-2 rounded border border-indigo-700/50">
+                <span class="w-3 h-3 bg-amber-500 rounded-sm inline-block shrink-0"></span>
+                <span><b>琥珀金區域</b>：新均衡點 $E_1$ 的總收益面積。</span>
+              </div>
+              <p class="text-[11px] text-indigo-200 pt-1 italic">💡 提示：比較兩塊長方形面積的大小，即可直接看出總收益是增加還是減少！</p>
+            </div>
+          </div>
+
+          <button onclick="recordData()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold py-2.5 px-4 rounded-xl transition shadow-sm flex items-center justify-center space-x-2">
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span>記錄當前模擬數據供對比</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 已記錄數據清單 -->
+      <div class="mt-5 pt-4 border-t border-slate-200">
+        <h4 class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2"><i class="fa-solid fa-table-list mr-1"></i>已記錄的對比數據（最多 3 組）：</h4>
+        <div id="recordedTableContainer" class="overflow-x-auto">
+          <p class="text-xs text-slate-400 italic">尚未記錄數據，請點擊上方按鈕保存當前模擬結果。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 階段三：反思與全班展示 -->
+    <section class="bg-white rounded-xl p-5 shadow-sm border border-slate-200 mb-12">
+      <div class="flex items-center space-x-2 mb-3">
+        <span class="bg-indigo-100 text-indigo-700 w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm">3</span>
+        <h2 class="text-base font-bold text-slate-800">階段三：反思總結與全班小組成果展示</h2>
+      </div>
+      <p class="text-sm text-slate-600 mb-4">綜合剛才的模擬結果，你們小組對此市場變動的經濟學結論：</p>
+      
+      <div class="mb-4">
+        <textarea id="groupConclusion" rows="3" class="w-full text-sm p-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none" placeholder="例如：由於需求向右平移幅度大於供應，導致均衡價格上升，均衡數量增加，總收益亦隨之上升..."></textarea>
+        <button onclick="saveConclusion()" class="mt-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold py-2 px-4 rounded-lg transition">
+          儲存本組結論
+        </button>
+      </div>
+
+      <!-- 全班 5 組展示板 -->
+      <div class="mt-6 border-t border-slate-200 pt-4">
+        <h3 class="text-sm font-bold text-slate-700 mb-3"><i class="fa-solid fa-users-rectangle mr-1.5 text-indigo-600"></i>👥 全班 5 個小組探究成果展示板：</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3" id="classGallery">
+          <!-- JS 渲染各組答案 -->
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="bg-slate-800 text-slate-400 text-xs py-4 text-center mt-auto">
+    <p>HKDSE Economics Interactive Teaching Tool | 支援需求與供應動態平移及總收益分析</p>
+  </footer>
+
+  <!-- JavaScript 核心邏輯 -->
+  <script>
+    const scenarios = [
+      {
+        id: 1,
+        title: "情境 1：替代品與聯合需求",
+        desc: "☕ <b>情境背景：</b>熱門咖啡價格大幅上升（影響其替代品奶茶），同時奶茶與珍珠實施套裝推廣（輔助品／聯合需求）。請分析這對珍珠市場的均衡價格與均衡交易量有何影響。",
+        defaultD: 2,
+        defaultS: 0
+      },
+      {
+        id: 2,
+        title: "情境 2：生產技術與聯合供應",
+        desc: "🐄 <b>情境背景：</b>畜牧業養殖技術顯著提升，同時牛肉市場價格上升帶動牛皮的產量增加（聯合供應）。請分析這對牛皮市場的影響。",
+        defaultD: 0,
+        defaultS: 2
+      },
+      {
+        id: 3,
+        title: "情境 3：消費券與原料加價",
+        desc: "🛍️ <b>情境背景：</b>政府向市民派發消費券，但同時進口原材料價格大幅上漲。請分析對零售市場的雙重影響。",
+        defaultD: 2,
+        defaultS: -2
+      }
+    ];
+
+    let currentScenarioId = 1;
+    let currentGroup = 1;
+    let groupData = {};
+
+    function initGroupData() {
+      for(let g=1; g<=5; g++) {
+        groupData[g] = {};
+        scenarios.forEach(s => {
+          groupData[g][s.id] = {
+            predDemand: "none",
+            predSupply: "none",
+            predReason: "",
+            dShift: s.defaultD,
+            sShift: s.defaultS,
+            conclusion: "",
+            records: []
+          };
+        });
+      }
+    }
+
+    initGroupData();
+
+    const savedStorage = localStorage.getItem('dse_econ_supply_demand_data');
+    if(savedStorage) {
+      try {
+        groupData = JSON.parse(savedStorage);
+        const stElem = document.getElementById('savedTime');
+        if(stElem) stElem.innerText = "已從本機載入上次記錄";
+      } catch(e) { console.error(e); }
+    }
+
+    function persistData() {
+      localStorage.setItem('dse_econ_supply_demand_data', JSON.stringify(groupData));
+      const stElem = document.getElementById('savedTime');
+      if(stElem) stElem.innerText = "已自動儲存於 " + new Date().toLocaleTimeString();
+    }
+
+    function renderScenarios() {
+      const container = document.getElementById('scenarioCards');
+      if(!container) return;
+      container.innerHTML = "";
+      scenarios.forEach(s => {
+        const active = s.id === currentScenarioId;
+        const btn = document.createElement('button');
+        btn.className = `p-3 rounded-xl text-left border text-sm font-medium transition ${active ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'}`;
+        btn.innerHTML = `<div class="font-bold mb-1">${s.title}</div>`;
+        btn.onclick = () => switchScenario(s.id);
+        container.appendChild(btn);
+      });
+
+      const sc = scenarios.find(s => s.id === currentScenarioId);
+      const descElem = document.getElementById('scenarioDescription');
+      if(descElem && sc) descElem.innerHTML = sc.desc;
+    }
+
+    function loadGroupToUI() {
+      const data = groupData[currentGroup][currentScenarioId];
+      if(!data) return;
+      
+      const elD = document.getElementById('predDemand');
+      const elS = document.getElementById('predSupply');
+      const elR = document.getElementById('predReason');
+      const elDR = document.getElementById('dShiftRange');
+      const elSR = document.getElementById('sShiftRange');
+      const elC = document.getElementById('groupConclusion');
+
+      if(elD) elD.value = data.predDemand;
+      if(elS) elS.value = data.predSupply;
+      if(elR) elR.value = data.predReason;
+      if(elDR) elDR.value = data.dShift;
+      if(elSR) elSR.value = data.sShift;
+      if(elC) elC.value = data.conclusion;
+
+      const dVal = document.getElementById('dShiftVal');
+      const sVal = document.getElementById('sShiftVal');
+      if(dVal) dVal.innerText = data.dShift;
+      if(sVal) sVal.innerText = data.sShift;
+
+      updateCanvasAndMetrics();
+      renderRecords();
+      renderGallery();
+    }
+
+    function switchScenario(id) {
+      currentScenarioId = id;
+      renderScenarios();
+      loadGroupToUI();
+    }
+
+    const groupSelectElem = document.getElementById('groupSelect');
+    if(groupSelectElem) {
+      groupSelectElem.onchange = (e) => {
+        currentGroup = parseInt(e.target.value);
+        loadGroupToUI();
+      };
+    }
+
+    const predDemandElem = document.getElementById('predDemand');
+    if(predDemandElem) {
+      predDemandElem.onchange = function() {
+        groupData[currentGroup][currentScenarioId].predDemand = this.value;
+        persistData(); renderGallery();
+      };
+    }
+
+    const predSupplyElem = document.getElementById('predSupply');
+    if(predSupplyElem) {
+      predSupplyElem.onchange = function() {
+        groupData[currentGroup][currentScenarioId].predSupply = this.value;
+        persistData(); renderGallery();
+      };
+    }
+
+    const predReasonElem = document.getElementById('predReason');
+    if(predReasonElem) {
+      predReasonElem.oninput = function() {
+        groupData[currentGroup][currentScenarioId].predReason = this.value;
+        persistData(); renderGallery();
+      };
+    }
+
+    const dShiftRangeElem = document.getElementById('dShiftRange');
+    if(dShiftRangeElem) {
+      dShiftRangeElem.oninput = function() {
+        const val = parseInt(this.value);
+        groupData[currentGroup][currentScenarioId].dShift = val;
+        const dVal = document.getElementById('dShiftVal');
+        if(dVal) dVal.innerText = val;
+        updateCanvasAndMetrics();
+        persistData();
+      };
+    }
+
+    const sShiftRangeElem = document.getElementById('sShiftRange');
+    if(sShiftRangeElem) {
+      sShiftRangeElem.oninput = function() {
+        const val = parseInt(this.value);
+        groupData[currentGroup][currentScenarioId].sShift = val;
+        const sVal = document.getElementById('sShiftVal');
+        if(sVal) sVal.innerText = val;
+        updateCanvasAndMetrics();
+        persistData();
+      };
+    }
+
+    function resetD() {
+      groupData[currentGroup][currentScenarioId].dShift = 0;
+      const dRange = document.getElementById('dShiftRange');
+      const dVal = document.getElementById('dShiftVal');
+      if(dRange) dRange.value = 0;
+      if(dVal) dVal.innerText = 0;
+      updateCanvasAndMetrics(); persistData();
+    }
+    function resetS() {
+      groupData[currentGroup][currentScenarioId].sShift = 0;
+      const sRange = document.getElementById('sShiftRange');
+      const sVal = document.getElementById('sShiftVal');
+      if(sRange) sRange.value = 0;
+      if(sVal) sVal.innerText = 0;
+      updateCanvasAndMetrics(); persistData();
+    }
+
+    function saveConclusion() {
+      const elC = document.getElementById('groupConclusion');
+      const val = elC ? elC.value : "";
+      groupData[currentGroup][currentScenarioId].conclusion = val;
+      persistData();
+      renderGallery();
+      alert("結論已成功儲存！");
+    }
+
+    function recordData() {
+      const data = groupData[currentGroup][currentScenarioId];
+      const dShift = data.dShift;
+      const sShift = data.sShift;
+      
+      const p0 = 10, q0 = 10;
+      const p1 = Math.max(2, 10 + (dShift - sShift) * 0.5);
+      const q1 = Math.max(2, 10 + (dShift + sShift) * 0.5);
+      const tr0 = p0 * q0;
+      const tr1 = p1 * q1;
+      const trDiff = tr1 - tr0;
+
+      if(data.records.length >= 3) {
+        data.records.shift();
+      }
+      data.records.push({
+        dShift, sShift, p1: p1.toFixed(1), q1: q1.toFixed(1), tr1: tr1.toFixed(1), trDiff: trDiff.toFixed(1)
+      });
+      persistData();
+      renderRecords();
+    }
+
+    function renderRecords() {
+      const records = groupData[currentGroup][currentScenarioId].records;
+      const container = document.getElementById('recordedTableContainer');
+      if(!container) return;
+      if(records.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-400 italic">尚未記錄數據，請點擊上方按鈕保存當前模擬結果。</p>`;
+        return;
+      }
+
+      let html = `<table class="w-full text-left text-xs border-collapse">
+        <thead>
+          <tr class="bg-slate-100 text-slate-700 border-b">
+            <th class="p-2">平移量 ($\Delta D, \Delta S$)</th>
+            <th class="p-2">新價格 ($P_1$)</th>
+            <th class="p-2">新數量 ($Q_1$)</th>
+            <th class="p-2">新總收益 ($TR_1$)</th>
+            <th class="p-2">總收益變動 ($\Delta TR$)</th>
+          </tr>
+        </thead>
+        <tbody>`;
+      records.forEach((r) => {
+        html += `<tr class="border-b hover:bg-slate-50 font-mono">
+          <td class="p-2">D: ${r.dShift > 0 ? '+' + r.dShift : r.dShift}, S: ${r.sShift > 0 ? '+' + r.sShift : r.sShift}</td>
+          <td class="p-2">$${r.p1}</td>
+          <td class="p-2">${r.q1}</td>
+          <td class="p-2">$${r.tr1}</td>
+          <td class="p-2 ${parseFloat(r.trDiff) >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${parseFloat(r.trDiff) >= 0 ? '+' : ''}$${r.trDiff}</td>
+        </tr>`;
+      });
+      html += `</tbody></table>`;
+      container.innerHTML = html;
+    }
+
+    function renderGallery() {
+      const container = document.getElementById('classGallery');
+      if(!container) return;
+      let html = '';
+      for(let g=1; g<=5; g++) {
+        const gData = groupData[g][currentScenarioId];
+        html += `<div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs space-y-2">
+          <div class="font-bold text-indigo-700 flex justify-between items-center">
+            <span>第 ${g} 組</span>
+            <span class="text-[10px] bg-indigo-100 text-indigo-800 px-1.5 py-0.5 rounded">D:${gData.dShift}, S:${gData.sShift}</span>
+          </div>
+          <div class="text-slate-600">
+            <div><b>預測 D:</b> ${gData.predDemand === 'right' ? '向右平移' : gData.predDemand === 'left' ? '向左平移' : '未定'}</div>
+            <div><b>預測 S:</b> ${gData.predSupply === 'right' ? '向右平移' : gData.predSupply === 'left' ? '向左平移' : '未定'}</div>
+          </div>
+          <div class="p-2 bg-white rounded border border-slate-100 text-slate-700 italic">
+            "${gData.conclusion || '尚未填寫結論...'}"
+          </div>
+        </div>`;
+      }
+      container.innerHTML = html;
+    }
+
+    // --- Canvas 經濟圖表繪製引擎 ---
+    function updateCanvasAndMetrics() {
+      const data = groupData[currentGroup][currentScenarioId];
+      const dShift = data.dShift;
+      const sShift = data.sShift;
+
+      const p0 = 10, q0 = 10;
+      const p1 = Math.max(2, 10 + (dShift - sShift) * 0.5);
+      const q1 = Math.max(2, 10 + (dShift + sShift) * 0.5);
+
+      const canvas = document.getElementById('econCanvas');
+      if(!canvas) return;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const width = canvas.width;
+      const height = canvas.height;
+      const padding = 45;
+      const graphWidth = width - padding * 2;
+      const graphHeight = height - padding * 2;
+
+      function toX(q) {
+        return padding + (q / 20) * graphWidth;
+      }
+      function toY(p) {
+        return height - padding - (p / 20) * graphHeight;
+      }
+
+      // 1. 背景網格
+      ctx.strokeStyle = "#e2e8f0";
+      ctx.lineWidth = 1;
+      for(let i=0; i<=20; i+=5) {
+        ctx.beginPath(); ctx.moveTo(toX(i), padding); ctx.lineTo(toX(i), height - padding); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(padding, toY(i)); ctx.lineTo(width - padding, toY(i)); ctx.stroke();
+      }
+
+      // 2. 主座標軸
+      ctx.strokeStyle = "#334155";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(padding, height - padding); ctx.lineTo(width - padding, height - padding);
+      ctx.moveTo(padding, height - padding); ctx.lineTo(padding, padding);
+      ctx.stroke();
+
+      ctx.fillStyle = "#334155";
+      ctx.font = "12px Inter, sans-serif";
+      ctx.fillText("數量 (Q)", width - padding - 35, height - padding + 20);
+      ctx.fillText("價格 (P)", padding - 35, padding + 10);
+
+      // 3. 原始 D0 / S0 (灰色虛線)
+      ctx.strokeStyle = "#94a3b8";
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 4]);
+      
+      ctx.beginPath(); ctx.moveTo(toX(0), toY(20)); ctx.lineTo(toX(20), toY(0)); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(toX(0), toY(0)); ctx.lineTo(toX(20), toY(20)); ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = "#94a3b8";
+      ctx.font = "11px Inter, sans-serif";
+      ctx.fillText("D₀", toX(18), toY(2) - 4);
+      ctx.fillText("S₀", toX(18), toY(18) - 4);
+
+      // 4. 新 D1 / S1 平行平移
+      const offsetD = dShift * 0.9;
+      const offsetS = sShift * 0.9;
+
+      // D1 (藍色實線)
+      ctx.strokeStyle = "#2563eb";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      const dY1 = 20 + offsetD;
+      const dX2 = 20 + offsetD;
+      ctx.moveTo(toX(0), toY(dY1));
+      ctx.lineTo(toX(dX2), toY(0));
+      ctx.stroke();
+
+      ctx.fillStyle = "#2563eb";
+      ctx.font = "bold 11px Inter, sans-serif";
+      ctx.fillText("D₁", toX(Math.max(1, dX2 - 3)), toY(3));
+
+      // S1 (綠色實線)
+      ctx.strokeStyle = "#059669";
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(toX(0), toY(-offsetS));
+      ctx.lineTo(toX(20), toY(20 - offsetS));
+      ctx.stroke();
+
+      ctx.fillStyle = "#059669";
+      ctx.font = "bold 11px Inter, sans-serif";
+      ctx.fillText("S₁", toX(18), toY(20 - offsetS) - 6);
+
+      // 5. 總收益面積視覺化（E0 總收益用藍色，E1 總收益用琥珀金色）
+      ctx.fillStyle = "rgba(37, 99, 235, 0.12)";
+      ctx.fillRect(padding, toY(10), toX(10) - padding, height - padding - toY(10));
+      ctx.strokeStyle = "rgba(37, 99, 235, 0.4)";
+      ctx.lineWidth = 1;
+      ctx.setLineDash([2, 2]);
+      ctx.strokeRect(padding, toY(10), toX(10) - padding, height - padding - toY(10));
+
+      ctx.fillStyle = "rgba(245, 158, 11, 0.18)";
+      ctx.fillRect(padding, toY(p1), toX(q1) - padding, height - padding - toY(p1));
+      ctx.strokeStyle = "rgba(245, 158, 11, 0.6)";
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([]);
+      ctx.strokeRect(padding, toY(p1), toX(q1) - padding, height - padding - toY(p1));
+
+      // 6. 繪製均衡點 E0 與 E1
+      ctx.fillStyle = "#64748b";
+      ctx.beginPath(); ctx.arc(toX(10), toY(10), 4, 0, Math.PI*2); ctx.fill();
+      ctx.fillText("E₀", toX(10) + 6, toY(10) - 6);
+
+      ctx.fillStyle = "#d97706";
+      ctx.beginPath(); ctx.arc(toX(q1), toY(p1), 6, 0, Math.PI*2); ctx.fill();
+      ctx.fillText("E₁", toX(q1) + 8, toY(p1) - 8);
+
+      ctx.strokeStyle = "#d97706";
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath();
+      ctx.moveTo(toX(q1), toY(p1)); ctx.lineTo(toX(q1), height - padding);
+      ctx.moveTo(toX(q1), toY(p1)); ctx.lineTo(padding, toY(p1));
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderScenarios();
+      loadGroupToUI();
+    });
+  </script>
+</body>
+</html>
